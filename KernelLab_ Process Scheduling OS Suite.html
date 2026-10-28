@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Interactive Process Scheduling Website by Atharva Shinde & Bhumi Singh.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Scheduling OS Suite | Atharva & Bhumi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080f24; --panel:#0f1a3a; --panel2:#142148; --line:#223062;
+  --text:#e6ecff; --muted:#8e9bc7; --cyan:#22d3ee; --violet:#8b5cf6;
+  --good:#34d399; --warn:#fbbf24; --bad:#f87171;
+  --sans:'Space Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;display:flex;min-height:100vh}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* Sidebar */
+.sidebar{width:270px;flex-shrink:0;background:#0b1430;border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;font-weight:700;color:#06102a}
+.brand b{display:block;font-size:19px;letter-spacing:.2px}
+.brand small{color:var(--muted);font-size:12px}
+.nav-title{font-size:12px;color:var(--muted);margin-bottom:8px}
+.nav button{width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:10px;padding:11px 12px;cursor:pointer;color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:4px}
+.nav button:hover{background:var(--panel)}
+.nav button.active{background:linear-gradient(90deg,rgba(34,211,238,.14),rgba(139,92,246,.14));border-color:var(--line);color:var(--text)}
+.authors{margin-top:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px}
+.authors small{color:var(--muted);display:block;margin-bottom:6px}
+.status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+
+/* Main */
+main{flex:1;min-width:0;padding:26px clamp(16px,3vw,40px) 50px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;color:var(--muted);font-size:14px;flex-wrap:wrap}
+.menu-btn{display:none;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.crumb b{color:var(--text)}
+.pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--panel)}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.1;margin-bottom:10px}
+h1 span{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:22px;margin-bottom:6px}
+h3{font-size:17px;margin-bottom:6px}
+.lead{color:var(--muted);max-width:70ch;margin-bottom:22px}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:22px}
+.step{font-family:var(--mono);font-size:12px;color:var(--cyan);margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:14px}
+
+/* Buttons */
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--cyan)}
+.btn.primary{background:linear-gradient(90deg,var(--cyan),var(--violet));color:#06102a;font-weight:700;border:0;padding:12px 20px}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;background:#0c1633;white-space:nowrap}
+td{padding:8px 12px;border-top:1px solid var(--line);font-family:var(--mono);font-size:14px}
+td input{width:100%;background:#0a1330;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:var(--mono)}
+td input:focus{border-color:var(--cyan);outline:none}
+td.num{text-align:right}
+.msg{margin-top:10px;font-size:14px;min-height:20px}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+.hint{color:var(--muted);font-size:13px;margin-top:10px}
+
+/* Algorithm cards */
+.algos{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.algo{background:#0c1633;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s}
+.algo:hover{border-color:var(--muted)}
+.algo.active{border-color:var(--cyan);background:linear-gradient(180deg,rgba(34,211,238,.10),rgba(139,92,246,.08))}
+.algo .ic{font-size:20px;display:block;margin-bottom:6px}
+.algo b{display:block;margin-bottom:4px}
+.algo small{color:var(--muted)}
+.algo.new::after{content:"New";float:right;background:var(--violet);color:#fff;font-size:11px;border-radius:999px;padding:1px 8px}
+.panel-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0 18px}
+.panel-info div{background:#0c1633;border:1px solid var(--line);border-radius:10px;padding:12px}
+.panel-info small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
+.panel-info b{font-size:15px}
+.params{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.params label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.params input{width:110px;background:#0a1330;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--mono);color:var(--text)}
+.params input:focus{border-color:var(--cyan);outline:none}
+.hidden{display:none!important}
+
+/* Metrics */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:16px 0 22px}
+.stat{background:#0c1633;border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat small{color:var(--muted);font-size:12px}
+.stat .v{font-size:26px;font-weight:700;font-family:var(--mono);margin:2px 0}
+.stat .d{color:var(--muted);font-size:12px}
+.stat:nth-child(odd) .v{color:var(--cyan)}.stat:nth-child(even) .v{color:#b79cff}
+
+/* Gantt */
+.gantt-scroll{overflow-x:auto;padding-bottom:6px}
+.gantt{display:flex;min-width:100%;height:58px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.slice{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:#06102a;font-weight:600;border-right:1px solid rgba(6,16,42,.45);min-width:30px;opacity:0;transform:scaleY(.6);transform-origin:bottom;transition:opacity .25s,transform .25s}
+.slice.in{opacity:1;transform:none}
+.slice i{font-style:normal;font-weight:400;font-size:10px;opacity:.75}
+.slice.idle{background:repeating-linear-gradient(45deg,#1a2550,#1a2550 6px,#222f63 6px,#222f63 12px);color:var(--muted)}
+.ticks{display:flex;min-width:100%;margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.ticks span{display:block;position:relative}
+.ticks span::before{content:attr(data-s);position:absolute;left:-4px;top:0}
+.ticks span:last-child::after{content:attr(data-e);position:absolute;right:-4px;top:0}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend em{width:12px;height:12px;border-radius:3px;display:inline-block}
+.formulas{margin-top:18px;background:#0c1633;border:1px dashed var(--line);border-radius:12px;padding:16px;font-size:14px}
+.formulas code{font-family:var(--mono);color:var(--cyan)}
+.formulas p{margin:4px 0}
+
+/* Concepts */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.concept{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.concept.dtq{border-color:var(--violet)}
+.concept ul{margin:8px 0 0 18px;color:var(--muted);font-size:14px}
+.concept li{margin-bottom:4px}
+.concept pre{background:#0a1330;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;font-family:var(--mono);font-size:12.5px;overflow-x:auto;color:var(--cyan)}
+.tag{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);margin-bottom:8px}
+
+/* Compare */
+.best{color:var(--good);font-weight:700}
+.bar-row{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.bar-track{background:#0a1330;border-radius:6px;height:16px;overflow:hidden;border:1px solid var(--line)}
+.bar-fill{height:100%;border-radius:5px;transition:width .5s}
+.bar-row span:last-child{font-family:var(--mono);text-align:right}
+.verdict{margin-top:16px;background:#0c1633;border-left:3px solid var(--violet);border-radius:8px;padding:14px;font-size:14px}
+
+/* Deck */
+.deck{background:linear-gradient(135deg,#0a1636,#140f3a);border:1px solid var(--line);border-radius:16px;aspect-ratio:16/9;max-height:62vh;width:100%;padding:clamp(18px,4vw,48px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:auto}
+.deck h2{font-size:clamp(20px,3.2vw,34px);margin-bottom:14px}
+.deck ul{margin-left:22px;color:#c8d3f5;font-size:clamp(14px,1.7vw,19px)}
+.deck li{margin-bottom:8px}
+.deck .num{position:absolute;right:18px;bottom:12px;font-family:var(--mono);color:var(--muted);font-size:13px}
+.deck-ctl{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:14px}
+
+footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
+
+@media(max-width:860px){
+  .sidebar{position:fixed;z-index:20;left:0;top:0;transform:translateX(-100%);transition:transform .25s}
+  .sidebar.open{transform:none}
+  .menu-btn{display:inline-block}
+  .bar-row{grid-template-columns:100px 1fr 60px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">K</div>
+    <div><b>KernelLab</b><small>OS Scheduler</small></div>
+  </div>
+  <nav class="nav" aria-label="Experiment modules">
+    <div class="nav-title">Experiment modules</div>
+    <button class="active" data-tab="workbench">⚡ Scheduling Workbench</button>
+    <button data-tab="concepts">📖 Core Concepts &amp; Theory</button>
+    <button data-tab="compare">📊 Comparative Analysis</button>
+    <button data-tab="deck">📽️ Presentation Deck</button>
+  </nav>
+  <div class="authors">
+    <small>Authors</small>
+    Atharva Shinde (50)<br>Bhumi Singh (51)
+  </div>
+  <div class="status"><span class="dot"></span> System Online · Practical OS Suite v2.5</div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu">☰</button>
+    <div class="crumb">Process Scheduling / <b id="crumb">Scheduling Workbench</b></div>
+    <div class="pill">👥 Authors: <b>Atharva (50) &amp; Bhumi (51)</b></div>
+  </div>
+
+  <!-- ============ WORKBENCH ============ -->
+  <section class="tab active" id="tab-workbench">
+    <p class="step">OPERATING SYSTEMS · PRACTICAL PROJECT</p>
+    <h1>Interactive <span>Process Scheduling</span></h1>
+    <p class="lead">Designed and developed by <b>Atharva Shinde (Roll No. 50)</b> and <b>Bhumi Singh (Roll No. 51)</b>. Test custom workloads, configure time quanta, and analyze dispatching behaviors in real time.</p>
+    <div class="row" style="margin-bottom:18px"><button class="btn" id="resetBtn">↻ Reset Workbench</button></div>
+
+    <div class="card">
+      <p class="step">STEP 01</p>
+      <h2>Process Queue &amp; Workload Configuration</h2>
+      <p class="sub"><b id="procCount">0</b> processes · edit identifiers, arrival times and CPU bursts directly in the table.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>PROCESS ID</th><th>ARRIVAL TIME (AT)</th><th>CPU BURST TIME (BT)</th><th>WORKLOAD TAG</th><th>ACTION</th></tr></thead>
+          <tbody id="procBody"></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" id="addBtn">＋ Add Custom Process</button>
+        <button class="btn" id="benchBtn">⚡ Load Benchmark Suite</button>
+        <button class="btn danger" id="clearBtn">Clear All</button>
+      </div>
+      <p class="hint">💡 <b>Rule:</b> arrival times must be non-negative integers. Burst durations must be ≥ 1 unit.</p>
+      <p class="msg" id="msg"></p>
+    </div>
+
+    <div class="card">
+      <p class="step">STEP 02</p>
+      <h2>Simulation Control &amp; Architecture</h2>
+      <p class="sub">Choose a scheduling algorithm.</p>
+      <div class="algos" id="algos">
+        <button class="algo active" data-algo="fcfs"><span class="ic">⇥</span><b>First Come, First Served (FCFS)</b><small>Non-preemptive queue dispatching in arrival order.</small></button>
+        <button class="algo" data-algo="rr"><span class="ic">↻</span><b>Round Robin (RR)</b><small>Preemptive time-sliced multitasking with a fixed quantum.</small></button>
+        <button class="algo new" data-algo="dtq"><span class="ic">⇆</span><b>Dynamic Time Quantum RR (DTQ-RR)</b><small>Quantum is recalculated every round from the ready queue.</small></button>
+      </div>
+
+      <div class="params">
+        <label id="qWrap" class="hidden">Time quantum (units)<input type="number" id="qFixed" min="1" step="1" value="4"></label>
+        <label id="qminWrap" class="hidden">Qmin<input type="number" id="qMin" min="1" step="1" value="2"></label>
+        <label id="qmaxWrap" class="hidden">Qmax<input type="number" id="qMax" min="1" step="1" value="6"></label>
+      </div>
+
+      <h3 id="algoTitle">First Come, First Served (FCFS)</h3>
+      <p class="sub" id="algoDesc"></p>
+      <div class="panel-info">
+        <div><small>ACTIVE ALGORITHM</small><b id="iAlgo"></b></div>
+        <div><small>QUEUED PROCESSES</small><b id="iQueued"></b></div>
+        <div><small>TIME QUANTUM</small><b id="iQ"></b></div>
+        <div><small>DISPATCH POLICY</small><b id="iPolicy"></b></div>
+      </div>
+      <button class="btn primary" id="runBtn">▶ Execute Process Scheduling Simulation</button>
+      <p class="hint">🔒 Developed by Atharva Shinde (50) and Bhumi Singh (51). Client-side sandbox execution.</p>
+    </div>
+
+    <div class="card">
+      <p class="step">STEP 03</p>
+      <div class="row" style="justify-content:space-between">
+        <h2>Execution Output, Timeline &amp; Metrics</h2>
+        <button class="btn" id="csvBtn" disabled>⇩ Export CSV Report</button>
+      </div>
+      <p class="sub" id="runState">Awaiting simulation execution. Configure the workload in Step 01, then run the simulation.</p>
+
+      <div class="stats">
+        <div class="stat"><small>AVG WAITING TIME</small><div class="v" id="sWT">0.00</div><div class="d">Mean ready queue delay</div></div>
+        <div class="stat"><small>AVG TURNAROUND TIME</small><div class="v" id="sTAT">0.00</div><div class="d">Arrival to completion span</div></div>
+        <div class="stat"><small>AVG RESPONSE TIME</small><div class="v" id="sRT">0.00</div><div class="d">Arrival to first CPU start</div></div>
+        <div class="stat"><small>CONTEXT SWITCHES</small><div class="v" id="sCS">0</div><div class="d">Changes between processes</div></div>
+        <div class="stat"><small>TOTAL CPU TIME</small><div class="v" id="sCPU">0</div><div class="d">Cumulative burst allocation</div></div>
+        <div class="stat"><small>CPU UTILIZATION</small><div class="v" id="sUtil">0.0%</div><div class="d">Total burst ÷ max completion</div></div>
+      </div>
+
+      <div class="row" style="justify-content:space-between">
+        <h3>Visual Execution Timeline (Gantt Chart)</h3>
+        <button class="btn" id="replayBtn" disabled>↻ Replay Animation</button>
+      </div>
+      <p class="sub">Color-coded breakdown of processor time slices. In DTQ-RR each slice shows the quantum (Q) of its round.</p>
+      <div class="gantt-scroll">
+        <div class="gantt" id="gantt"></div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+
+      <h3 style="margin-top:26px">Detailed Process Timing Metrics</h3>
+      <p class="sub">Arrival (AT), Burst (BT), Completion (CT), Turnaround (TAT), Waiting (WT) and Response (RT).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>PROCESS</th><th>AT</th><th>BT</th><th>CT</th><th>TAT</th><th>WT</th><th>RT</th></tr></thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+
+      <div class="formulas">
+        <b>📐 Core mathematical formulas used in this lab</b>
+        <p><code>Turnaround Time (TAT)</code> = CT − AT</p>
+        <p><code>Waiting Time (WT)</code> = TAT − BT</p>
+        <p><code>Response Time (RT)</code> = First CPU Start − AT</p>
+        <p><code>CPU Utilization</code> = (Total Burst ÷ Max Completion) × 100</p>
+        <p><code>DTQ-RR Quantum</code> = clamp( round( mean remaining burst of ready queue ), Qmin, Qmax )</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONCEPTS ============ -->
+  <section class="tab" id="tab-concepts">
+    <p class="step">THEORY</p>
+    <h1>Core <span>Concepts</span></h1>
+    <p class="lead">CPU scheduling decides which ready process runs next. The choice of policy changes waiting time, response time and the number of context switches.</p>
+    <div class="concept-grid">
+      <article class="concept">
+        <span class="tag">Non-preemptive</span>
+        <h3>First Come, First Served</h3>
+        <p class="sub">Processes run in arrival order and keep the CPU until they finish.</p>
+        <ul>
+          <li>Simple, no starvation, minimum context switches.</li>
+          <li>Convoy effect: a long job delays every short job behind it.</li>
+          <li>Poor response time for interactive workloads.</li>
+        </ul>
+      </article>
+      <article class="concept">
+        <span class="tag">Preemptive</span>
+        <h3>Round Robin</h3>
+        <p class="sub">Each process gets a fixed time quantum, then goes to the back of the ready queue.</p>
+        <ul>
+          <li>Fair sharing and good response time.</li>
+          <li>Too small a quantum causes many context switches; too large behaves like FCFS.</li>
+          <li>The right quantum depends on the workload, and it is fixed in advance.</li>
+        </ul>
+      </article>
+      <article class="concept dtq">
+        <span class="tag">Preemptive · Adaptive</span>
+        <h3>Dynamic Time Quantum RR (DTQ-RR)</h3>
+        <p class="sub">Round Robin where the quantum is recalculated at the start of every round.</p>
+        <ul>
+          <li>Quantum follows the mean remaining burst of the ready queue.</li>
+          <li>Clamped between Qmin and Qmax so it never becomes too small or too large.</li>
+          <li>As processes finish and remaining work shrinks, the quantum adapts, which reduces unnecessary preemptions.</li>
+        </ul>
+<pre>Q = clamp( round(mean(rem)), Qmin, Qmax )
+Qmin = 2, Qmax = 6
+
+each round:
+  Q = compute from ready queue
+  for every process in the queue:
+    run min(Q, remaining)
+    if remaining > 0: requeue</pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section class="tab" id="tab-compare">
+    <p class="step">ANALYSIS</p>
+    <h1>Comparative <span>Analysis</span></h1>
+    <p class="lead">Runs FCFS, Round Robin and DTQ-RR on the current workload from the Workbench, using the quantum settings you configured there.</p>
+    <div class="card">
+      <div class="row" style="margin-bottom:14px"><button class="btn primary" id="cmpBtn">▶ Compare All Algorithms</button></div>
+      <p class="msg" id="cmpMsg"></p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ALGORITHM</th><th>QUANTUM</th><th>AVG WT</th><th>AVG TAT</th><th>AVG RT</th><th>CONTEXT SWITCHES</th><th>UTILIZATION</th></tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+      </div>
+      <h3 style="margin-top:24px">Average waiting time</h3>
+      <div id="cmpBars"></div>
+      <div class="verdict hidden" id="verdict"></div>
+    </div>
+  </section>
+
+  <!-- ============ DECK ============ -->
+  <section class="tab" id="tab-deck">
+    <p class="step">PRESENTATION</p>
+    <h1>Presentation <span>Deck</span></h1>
+    <p class="lead">Use the arrow keys or buttons to move between slides.</p>
+    <div class="deck" id="deck"></div>
+    <div class="deck-ctl">
+      <button class="btn" id="prevSlide">◀ Previous</button>
+      <span id="slideCount" style="font-family:var(--mono)"></span>
+      <button class="btn" id="nextSlide">Next ▶</button>
+    </div>
+  </section>
+
+  <footer>Process Scheduling · Atharva Shinde (50) &amp; Bhumi Singh (51) · Operating Systems Practical Lab</footer>
+</main>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- State ---------- */
+const COLORS=['#22d3ee','#a78bfa','#34d399','#fbbf24','#f472b6','#60a5fa','#fb923c','#2dd4bf','#c084fc','#f87171','#a3e635','#38bdf8'];
+const DEFAULT_PROCS=[
+  {id:'P1',at:0,bt:6,tag:'CPU-bound'},
+  {id:'P2',at:1,bt:8,tag:'Batch'},
+  {id:'P3',at:2,bt:3,tag:'Interactive'},
+  {id:'P4',at:3,bt:5,tag:'I/O-heavy'}
+];
+const BENCH=[
+  {id:'P1',at:0,bt:10,tag:'CPU-bound'},
+  {id:'P2',at:1,bt:4,tag:'Interactive'},
+  {id:'P3',at:2,bt:9,tag:'Batch'},
+  {id:'P4',at:3,bt:2,tag:'Interactive'},
+  {id:'P5',at:5,bt:7,tag:'CPU-bound'},
+  {id:'P6',at:6,bt:3,tag:'I/O-heavy'}
+];
+let procs=DEFAULT_PROCS.map(p=>({...p}));
+let algo='fcfs';
+let lastRun=null;
+let animTimers=[];
+
+const $=id=>document.getElementById(id);
+
+/* ---------- Tabs ---------- */
+const crumbNames={workbench:'Scheduling Workbench',concepts:'Core Concepts & Theory',compare:'Comparative Analysis',deck:'Presentation Deck'};
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+b.dataset.tab));
+    $('crumb').textContent=crumbNames[b.dataset.tab];
+    $('sidebar').classList.remove('open');
+    window.scrollTo({top:0});
+  });
+});
+$('menuBtn').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+
+/* ---------- Process table ---------- */
+function renderTable(){
+  const body=$('procBody'); body.innerHTML='';
+  procs.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    [['id','text'],['at','number'],['bt','number'],['tag','text']].forEach(([key,type])=>{
+      const td=document.createElement('td');
+      const inp=document.createElement('input');
+      inp.type=type; inp.value=p[key];
+      if(type==='number'){inp.step='1'; inp.min=key==='bt'?'1':'0';}
+      inp.setAttribute('aria-label',key.toUpperCase()+' for row '+(i+1));
+      inp.addEventListener('input',()=>{p[key]=type==='number'?inp.value:inp.value; updateInfo();});
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    const td=document.createElement('td');
+    const del=document.createElement('button');
+    del.className='btn danger'; del.textContent='✕ Remove';
+    del.addEventListener('click',()=>{procs.splice(i,1); renderTable(); updateInfo();});
+    td.appendChild(del); tr.appendChild(td);
+    body.appendChild(tr);
+  });
+  $('procCount').textContent=procs.length;
+}
+function nextId(){
+  let n=procs.length+1;
+  while(procs.some(p=>String(p.id)==='P'+n)) n++;
+  return 'P'+n;
+}
+$('addBtn').addEventListener('click',()=>{
+  procs.push({id:nextId(),at:0,bt:4,tag:'Custom'}); renderTable(); updateInfo();
+});
+$('benchBtn').addEventListener('click',()=>{
+  procs=BENCH.map(p=>({...p})); renderTable(); updateInfo(); setMsg('Benchmark suite loaded (6 processes).','ok');
+});
+$('clearBtn').addEventListener('click',()=>{
+  procs=[]; renderTable(); updateInfo(); setMsg('Workload cleared. Add a process to continue.','');
+});
+$('resetBtn').addEventListener('click',()=>{
+  procs=DEFAULT_PROCS.map(p=>({...p}));
+  $('qFixed').value=4; $('qMin').value=2; $('qMax').value=6;
+  setAlgo('fcfs'); renderTable(); clearOutput(); setMsg('Workbench reset.','ok');
+});
+function setMsg(t,cls){const m=$('msg'); m.textContent=t; m.className='msg '+(cls||'');}
+
+/* ---------- Algorithm selection ---------- */
+const ALGO_INFO={
+  fcfs:{name:'First Come, First Served (FCFS)',short:'FCFS (Non-Preemptive)',policy:'First-In, First-Out',
+    desc:'Processes are scheduled strictly by arrival time. Once a process gets the CPU it runs uninterrupted until completion.'},
+  rr:{name:'Round Robin (RR)',short:'RR (Preemptive)',policy:'Fixed time slice, cyclic',
+    desc:'Each process runs for at most one fixed time quantum, then is preempted and moved to the back of the ready queue.'},
+  dtq:{name:'Dynamic Time Quantum Round Robin (DTQ-RR)',short:'DTQ-RR (Preemptive, Adaptive)',policy:'Mean-adaptive time slice',
+    desc:'Round Robin where the quantum is recalculated at the start of every round: the rounded mean remaining burst of the ready queue, clamped between Qmin and Qmax.'}
+};
+function setAlgo(a){
+  algo=a;
+  document.querySelectorAll('.algo').forEach(b=>b.classList.toggle('active',b.dataset.algo===a));
+  $('qWrap').classList.toggle('hidden',a!=='rr');
+  $('qminWrap').classList.toggle('hidden',a!=='dtq');
+  $('qmaxWrap').classList.toggle('hidden',a!=='dtq');
+  updateInfo();
+}
+document.querySelectorAll('.algo').forEach(b=>b.addEventListener('click',()=>setAlgo(b.dataset.algo)));
+['qFixed','qMin','qMax'].forEach(id=>$(id).addEventListener('input',updateInfo));
+
+function quantumLabel(a){
+  if(a==='fcfs') return 'N/A (Sequential)';
+  if(a==='rr') return $('qFixed').value+' units (fixed)';
+  return 'Dynamic ('+$('qMin').value+' – '+$('qMax').value+')';
+}
+function updateInfo(){
+  const i=ALGO_INFO[algo];
+  $('algoTitle').textContent=i.name;
+  $('algoDesc').textContent=i.desc;
+  $('iAlgo').textContent=i.short;
+  $('iQueued').textContent=procs.length+' Active';
+  $('iQ').textContent=quantumLabel(algo);
+  $('iPolicy').textContent=i.policy;
+}
+
+/* ---------- Validation ---------- */
+function readProcs(){
+  if(!procs.length) return {error:'Add at least one process.'};
+  const seen=new Set(), out=[];
+  for(let i=0;i<procs.length;i++){
+    const p=procs[i], id=String(p.id).trim();
+    if(!id) return {error:'Row '+(i+1)+': process ID cannot be empty.'};
+    if(seen.has(id)) return {error:'Process ID "'+id+'" is used more than once.'};
+    seen.add(id);
+    const at=Number(p.at), bt=Number(p.bt);
+    if(String(p.at).trim()===''||!Number.isInteger(at)||at<0) return {error:id+': arrival time must be a whole number ≥ 0.'};
+    if(String(p.bt).trim()===''||!Number.isInteger(bt)||bt<1) return {error:id+': burst time must be a whole number ≥ 1.'};
+    out.push({id,at,bt,tag:p.tag});
+  }
+  return {data:out};
+}
+function readQuanta(){
+  const q=Number($('qFixed').value), qmin=Number($('qMin').value), qmax=Number($('qMax').value);
+  if(!Number.isInteger(q)||q<1) return {error:'Time quantum must be a whole number ≥ 1.'};
+  if(!Number.isInteger(qmin)||qmin<1) return {error:'Qmin must be a whole number ≥ 1.'};
+  if(!Number.isInteger(qmax)||qmax<qmin) return {error:'Qmax must be a whole number ≥ Qmin.'};
+  return {q,qmin,qmax};
+}
+
+/* ---------- Schedulers ---------- */
+function prep(procs){return procs.map(x=>({...x,rem:x.bt,ct:0,rt:-1}));}
+
+function finalize(p,gantt,label,qLabel){
+  const rows=p.map(x=>{
+    const tat=x.ct-x.at;
+    return {id:x.id,at:x.at,bt:x.bt,ct:x.ct,tat,wt:tat-x.bt,rt:x.rt};
+  });
+  const n=rows.length;
+  const sum=k=>rows.reduce((s,r)=>s+r[k],0);
+  const totalBurst=sum('bt');
+  const maxCT=Math.max(...rows.map(r=>r.ct));
+  let cs=0,prev=null;
+  gantt.forEach(g=>{ if(g.pid==='IDLE'){prev=null;return;} if(prev!==null&&prev!==g.pid) cs++; prev=g.pid; });
+  return {label,qLabel,gantt,rows,
+    avgWT:sum('wt')/n, avgTAT:sum('tat')/n, avgRT:sum('rt')/n,
+    cs, totalBurst, util:(totalBurst/maxCT)*100, makespan:maxCT};
+}
+
+function runFCFS(input){
+  const p=prep(input).sort((a,b)=>a.at-b.at);
+  const gantt=[]; let t=0;
+  p.forEach(x=>{
+    if(t<x.at){gantt.push({pid:'IDLE',start:t,end:x.at}); t=x.at;}
+    x.rt=t-x.at;
+    gantt.push({pid:x.id,start:t,end:t+x.bt});
+    t+=x.bt; x.ct=t;
+  });
+  return finalize(p,gantt,'FCFS','N/A');
+}
+
+/* One engine for RR and DTQ-RR: quantum is chosen at the start of every round.
+   Fixed RR returns the same value every round; DTQ-RR recomputes from the ready queue. */
+function runRoundRobin(input,qFn,label,qLabel,showQ){
+  const p=prep(input);
+  const sorted=[...p].sort((a,b)=>a.at-b.at);
+  const ready=[], added=new Set(), gantt=[];
+  let t=0, done=0, round=0;
+  const admit=()=>sorted.forEach(x=>{ if(x.at<=t&&!added.has(x.id)){added.add(x.id); ready.push(x);} });
+
+  while(done<p.length){
+    admit();
+    if(!ready.length){
+      const next=sorted.find(x=>!added.has(x.id));
+      gantt.push({pid:'IDLE',start:t,end:next.at});
+      t=next.at; continue;
+    }
+    round++;
+    const q=qFn(ready);
+    const roundSize=ready.length;
+    for(let i=0;i<roundSize;i++){
+      const cur=ready.shift();
+      if(cur.rt<0) cur.rt=t-cur.at;
+      const run=Math.min(q,cur.rem);
+      gantt.push({pid:cur.id,start:t,end:t+run,q:showQ?q:null,round});
+      t+=run; cur.rem-=run;
+      admit();                         // arrivals during the slice queue before the preempted process
+      if(cur.rem>0) ready.push(cur); else {cur.ct=t; done++;}
+    }
+  }
+  return finalize(p,gantt,label,qLabel);
+}
+function runRR(input,q){
+  return runRoundRobin(input,()=>q,'Round Robin',q+' (fixed)',false);
+}
+function runDTQ(input,qmin,qmax){
+  const qFn=ready=>{
+    const mean=ready.reduce((s,x)=>s+x.rem,0)/ready.length;
+    return Math.min(qmax,Math.max(qmin,Math.round(mean)));
+  };
+  return runRoundRobin(input,qFn,'DTQ-RR','Dynamic ('+qmin+'–'+qmax+')',true);
+}
+function execute(a,data,qs){
+  if(a==='fcfs') return runFCFS(data);
+  if(a==='rr') return runRR(data,qs.q);
+  return runDTQ(data,qs.qmin,qs.qmax);
+}
+
+/* ---------- Rendering results ---------- */
+const f2=n=>n.toFixed(2);
+function colorMap(rows){const m={}; rows.forEach((r,i)=>m[r.id]=COLORS[i%COLORS.length]); return m;}
+
+function clearTimers(){animTimers.forEach(clearTimeout); animTimers=[];}
+
+function renderGantt(res,animate){
+  clearTimers();
+  const cm=colorMap(res.rows), g=$('gantt'), tk=$('ticks'), total=res.makespan;
+  g.innerHTML=''; tk.innerHTML='';
+  const unitPx=Math.max(26,Math.min(60,900/total));
+  const width=Math.max(unitPx*total,0);
+  g.style.width=width+'px'; tk.style.width=width+'px';
+  const slices=[];
+  res.gantt.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='slice'+(s.pid==='IDLE'?' idle':'');
+    d.style.width=((s.end-s.start)*unitPx)+'px';
+    if(s.pid!=='IDLE') d.style.background=cm[s.pid];
+    d.title=s.pid+' · '+s.start+' → '+s.end+(s.q?' · Q='+s.q:'');
+    d.innerHTML='<span></span>'+(s.q?'<i></i>':'');
+    d.firstChild.textContent=s.pid==='IDLE'?'idle':s.pid;
+    if(s.q) d.lastChild.textContent='Q='+s.q;
+    g.appendChild(d); slices.push(d);
+    const t=document.createElement('span');
+    t.style.width=((s.end-s.start)*unitPx)+'px';
+    t.dataset.s=s.start; t.dataset.e=s.end;
+    tk.appendChild(t);
+  });
+  slices.forEach((d,i)=>{
+    if(!animate){d.classList.add('in'); return;}
+    animTimers.push(setTimeout(()=>d.classList.add('in'),i*220));
+  });
+  const lg=$('legend'); lg.innerHTML='';
+  res.rows.forEach(r=>{
+    const s=document.createElement('span');
+    const e=document.createElement('em'); e.style.background=cm[r.id];
+    s.appendChild(e); s.appendChild(document.createTextNode(r.id));
+    lg.appendChild(s);
+  });
+}
+
+function renderResults(res){
+  $('sWT').textContent=f2(res.avgWT);
+  $('sTAT').textContent=f2(res.avgTAT);
+  $('sRT').textContent=f2(res.avgRT);
+  $('sCS').textContent=res.cs;
+  $('sCPU').textContent=res.totalBurst+' units';
+  $('sUtil').textContent=res.util.toFixed(1)+'%';
+  const body=$('resBody'); body.innerHTML='';
+  const cm=colorMap(res.rows);
+  res.rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    [r.id,r.at,r.bt,r.ct,r.tat,r.wt,r.rt].forEach((v,i)=>{
+      const td=document.createElement('td'); td.textContent=v;
+      if(i===0){td.style.color=cm[r.id]; td.style.fontWeight='700';}
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  renderGantt(res,true);
+  $('csvBtn').disabled=false; $('replayBtn').disabled=false;
+}
+function clearOutput(){
+  clearTimers(); lastRun=null;
+  ['sWT','sTAT','sRT'].forEach(i=>$(i).textContent='0.00');
+  $('sCS').textContent='0'; $('sCPU').textContent='0 units'; $('sUtil').textContent='0.0%';
+  $('gantt').innerHTML=''; $('ticks').innerHTML=''; $('legend').innerHTML=''; $('resBody').innerHTML='';
+  $('csvBtn').disabled=true; $('replayBtn').disabled=true;
+  $('runState').textContent='Awaiting simulation execution. Configure the workload in Step 01, then run the simulation.';
+}
+
+$('runBtn').addEventListener('click',()=>{
+  const v=readProcs(); if(v.error){setMsg(v.error,'err'); return;}
+  const qs=readQuanta(); if(algo==='rr'&&qs.error){setMsg(qs.error,'err'); return;}
+  if(algo==='dtq'&&qs.error){setMsg(qs.error,'err'); return;}
+  setMsg('','');
+  lastRun=execute(algo,v.data,qs);
+  $('runState').textContent=lastRun.label+' finished at t = '+lastRun.makespan+' units with '+lastRun.cs+' context switches.';
+  renderResults(lastRun);
+  $('gantt').scrollIntoView({behavior:'smooth',block:'center'});
+});
+$('replayBtn').addEventListener('click',()=>{ if(lastRun) renderGantt(lastRun,true); });
+
+/* ---------- CSV export ---------- */
+$('csvBtn').addEventListener('click',()=>{
+  if(!lastRun) return;
+  const lines=['Algorithm,'+lastRun.label,'Quantum,'+lastRun.qLabel,'',
+    'Process,AT,BT,CT,TAT,WT,RT'];
+  lastRun.rows.forEach(r=>lines.push([r.id,r.at,r.bt,r.ct,r.tat,r.wt,r.rt].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')));
+  lines.push('', 'Avg WT,'+f2(lastRun.avgWT),'Avg TAT,'+f2(lastRun.avgTAT),'Avg RT,'+f2(lastRun.avgRT),
+    'Context switches,'+lastRun.cs,'CPU utilization %,'+lastRun.util.toFixed(1));
+  const filename='kernellab_'+lastRun.label.toLowerCase().replace(/[^a-z]+/g,'_')+'_report.csv';
+  const csv=lines.join('\n');
+  (async()=>{
+    let dl=null;
+    try{ dl=await window.claude.use('downloads'); }catch(e){ dl=null; }
+    if(!dl){ $('runState').textContent='CSV export is not available in this view.'; return; }
+    try{ await dl.save({filename,data:csv}); }
+    catch(err){ if(!err||err.code!=='declined') $('runState').textContent='CSV export failed. Please try again.'; }
+  })();
+});
+
+/* ---------- Comparative analysis ---------- */
+$('cmpBtn').addEventListener('click',()=>{
+  const v=readProcs(); const m=$('cmpMsg');
+  if(v.error){m.textContent=v.error; m.className='msg err'; return;}
+  const qs=readQuanta(); if(qs.error){m.textContent=qs.error; m.className='msg err'; return;}
+  m.textContent='Compared on '+v.data.length+' processes. Quantum settings come from the Workbench.'; m.className='msg ok';
+  const results=[runFCFS(v.data),runRR(v.data,qs.q),runDTQ(v.data,qs.qmin,qs.qmax)];
+  const best=k=>Math.min(...results.map(r=>r[k]));
+  const body=$('cmpBody'); body.innerHTML='';
+  results.forEach(r=>{
+    const tr=document.createElement('tr');
+    const cells=[
+      [r.label],[r.qLabel],
+      [f2(r.avgWT),r.avgWT===best('avgWT')],
+      [f2(r.avgTAT),r.avgTAT===best('avgTAT')],
+      [f2(r.avgRT),r.avgRT===best('avgRT')],
+      [r.cs,r.cs===best('cs')],
+      [r.util.toFixed(1)+'%']
+    ];
+    cells.forEach(([val,isBest])=>{
+      const td=document.createElement('td'); td.textContent=val;
+      if(isBest) td.className='best';
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  const barColors=['#22d3ee','#a78bfa','#34d399'];
+  const maxWT=Math.max(...results.map(r=>r.avgWT),0.01);
+  const bars=$('cmpBars'); bars.innerHTML='';
+  results.forEach((r,i)=>{
+    const row=document.createElement('div'); row.className='bar-row';
+    const l=document.createElement('span'); l.textContent=r.label;
+    const tr=document.createElement('div'); tr.className='bar-track';
+    const fl=document.createElement('div'); fl.className='bar-fill';
+    fl.style.background=barColors[i]; fl.style.width='0%';
+    tr.appendChild(fl);
+    const val=document.createElement('span'); val.textContent=f2(r.avgWT);
+    row.append(l,tr,val); bars.appendChild(row);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{fl.style.width=(r.avgWT/maxWT*100)+'%';}));
+  });
+  const bestWT=results.reduce((a,b)=>a.avgWT<=b.avgWT?a:b);
+  const bestRT=results.reduce((a,b)=>a.avgRT<=b.avgRT?a:b);
+  const vd=$('verdict'); vd.classList.remove('hidden');
+  vd.textContent='Lowest average waiting time: '+bestWT.label+' ('+f2(bestWT.avgWT)+'). Lowest average response time: '+
+    bestRT.label+' ('+f2(bestRT.avgRT)+'). Results depend on the workload, so try the benchmark suite and your own bursts.';
+});
+
+/* ---------- Presentation deck ---------- */
+const SLIDES=[
+  {t:'Process Scheduling: FCFS and Round Robin with Dynamic Time Quantum',l:['KernelLab: CPU scheduling simulator','Atharva Shinde (Roll No. 50) and Bhumi Singh (Roll No. 51)','Computer Engineering · 2026-27']},
+  {t:'Problem Statement',l:['Many processes compete for one CPU','The scheduling policy decides waiting and response time','A fixed quantum in Round Robin does not suit every workload']},
+  {t:'Objectives',l:['Simulate FCFS, Round Robin and DTQ-RR','Visualize execution with Gantt charts','Compare average WT, TAT, RT and context switches']},
+  {t:'FCFS',l:['Non-preemptive, runs in arrival order','Simple and starvation-free','Convoy effect hurts short jobs']},
+  {t:'Round Robin',l:['Preemptive with a fixed time quantum','Good response time and fairness','Quantum too small: many switches. Too large: behaves like FCFS']},
+  {t:'Dynamic Time Quantum RR',l:['Quantum recalculated every round','Q = clamp( round(mean remaining burst), 2, 6 )','Adapts as the ready queue shrinks']},
+  {t:'Implementation',l:['HTML, CSS and JavaScript, fully client-side','Editable workload table with validation','Gantt timeline, metrics table and CSV export']},
+  {t:'Conclusion',l:['DTQ-RR balances response time and context switches','The adaptive quantum removes manual tuning','Future work: priorities, I/O bursts, multi-core']}
+];
+let slide=0;
+function showSlide(){
+  const s=SLIDES[slide], d=$('deck');
+  d.innerHTML='';
+  const h=document.createElement('h2'); h.textContent=s.t; d.appendChild(h);
+  const ul=document.createElement('ul');
+  s.l.forEach(x=>{const li=document.createElement('li'); li.textContent=x; ul.appendChild(li);});
+  d.appendChild(ul);
+  const n=document.createElement('div'); n.className='num'; n.textContent=(slide+1)+' / '+SLIDES.length; d.appendChild(n);
+  $('slideCount').textContent=(slide+1)+' / '+SLIDES.length;
+}
+$('prevSlide').addEventListener('click',()=>{slide=(slide+SLIDES.length-1)%SLIDES.length; showSlide();});
+$('nextSlide').addEventListener('click',()=>{slide=(slide+1)%SLIDES.length; showSlide();});
+document.addEventListener('keydown',e=>{
+  if(!$('tab-deck').classList.contains('active')) return;
+  if(e.key==='ArrowRight') $('nextSlide').click();
+  if(e.key==='ArrowLeft') $('prevSlide').click();
+});
+
+/* ---------- Init ---------- */
+renderTable(); setAlgo('fcfs'); showSlide();
+})();
+</script>
+</body>
+</html>
